@@ -7,7 +7,7 @@
       - values.yml
 
     tasks:
-      - name: check for if jks.certs has any subvalues
+      - name: check if jks.certs has any subvalues. This needs some improvement..
         set_fact: thereAreCertificates=True
         when: (jks.certs is iterable) and (jks.certs is mapping) 
 
@@ -17,7 +17,7 @@
           state: directory
         when: thereAreCertificates is defined
 
-      - name: create temporary folder inside original temp folder for the certificate file
+      - name: create temporary folder inside original temp folder for the certificate files
         ansible.builtin.file:
           path: "{{ jks.tmpFolder }}/certificates"
           state: directory
@@ -29,7 +29,7 @@
           cmd: keytool -genkeypair -alias deleteme -storepass "{{ jks.keystorepassword }}" -keypass dummykeypass -keystore "{{ jks.tmpFolder }}/{{ jks.filename }}" -dname "CN=cn, OU=ou, O=o, L=L, ST=ST, C=C"
         when: thereAreCertificates is defined
 
-      - name: remove deleteme dummy cert from the keystore in order to have an empty JKS keystore file
+      - name: remove the dummy cert from the keystore in order to have an empty JKS keystore file
         shell:
           cmd: keytool -delete -alias deleteme -storepass "{{ jks.keystorepassword }}" -keystore "{{ jks.tmpFolder }}/{{ jks.filename }}"
         when: thereAreCertificates is defined
