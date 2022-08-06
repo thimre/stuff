@@ -17,7 +17,7 @@
           state: directory
         when: thereAreCertificates is defined
 
-      - name: create temporary folder inside for the certificates file
+      - name: create temporary folder inside original temp folder for the certificate file
         ansible.builtin.file:
           path: "{{ jks.tmpFolder }}/certificates"
           state: directory
@@ -29,12 +29,12 @@
           cmd: keytool -genkeypair -alias deleteme -storepass "{{ jks.keystorepassword }}" -keypass dummykeypass -keystore "{{ jks.tmpFolder }}/{{ jks.filename }}" -dname "CN=cn, OU=ou, O=o, L=L, ST=ST, C=C"
         when: thereAreCertificates is defined
 
-      - name: remove deleteme dummy cert from the keystore 
+      - name: remove deleteme dummy cert from the keystore in order to have an empty JKS keystore file
         shell:
           cmd: keytool -delete -alias deleteme -storepass "{{ jks.keystorepassword }}" -keystore "{{ jks.tmpFolder }}/{{ jks.filename }}"
         when: thereAreCertificates is defined
 
-      - name: put all certificates to files in temp folder for keytool to use
+      - name: decode all certificates from base64 and put them to files into the temp folder for keytool to use later on
         ansible.builtin.copy:
           content: "{{ item.fileContent | b64decode }}"
           dest: "{{ jks.tmpFolder }}/certificates/{{ item.fileName }}"
