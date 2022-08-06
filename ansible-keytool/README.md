@@ -6,7 +6,7 @@ Define the required variables in values.yml.
 
 ex:  
 `b64c=$(cat rootCA.crt | base64 -w 0)  `  
-`echo "&nbsp;  \"rootCA.crt\": \"$b64c\"" >> values.yml  `  
+`echo "\ \ \"rootCA.crt\": \"$b64c\"" >> values.yml  `  
 
 
 run with:  
