@@ -4,10 +4,10 @@ keytool and yes executables are needed for the playbook to work.
 
 Define the required variables in values.yml.
 
-ex:
-`b64c=$(cat rootCA.crt | base64 -w 0)  `
-`echo "  \"rootCA.crt\": \"$b64c\"" >> values.yml  `
+ex:  
+`b64c=$(cat rootCA.crt | base64 -w 0)  `  
+`echo "  \"rootCA.crt\": \"$b64c\"" >> values.yml  `  
 
 
 run with:  
-`ansible-playbook createJKS.yaml  `
+`ansible-playbook createJKS.yaml  `  
