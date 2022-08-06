@@ -8,7 +8,7 @@ __keytool and yes executables are needed for the playbook to work.__
 2. Add the certificates  
 ```
 b64c=$(cat rootCA.crt | base64 -w 0)  
-echo "  \"rootCA.crt\": \"$b64c\"" >> values.yml   
+echo "    \"rootCA.crt\": \"$b64c\"" >> values.yml   
 ```
 
 3. run with:  
