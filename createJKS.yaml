@@ -1,0 +1,59 @@
+---
+  - name: create JKS
+    hosts: localhost
+    connection: local
+    become: false
+    vars_files:
+      - values.yml
+
+    tasks:
+      - name: check for if jks.certs has any subvalues
+        set_fact: thereAreCertificates=True
+        when: (jks.certs is iterable) and (jks.certs is mapping) 
+
+      - name: create temporary folder for new JKS file
+        ansible.builtin.file:
+          path: "{{ jks.tmpFolder }}"
+          state: directory
+        when: thereAreCertificates is defined
+
+      - name: create temporary folder inside for the certificates file
+        ansible.builtin.file:
+          path: "{{ jks.tmpFolder }}/certificates"
+          state: directory
+          mode: "0755"
+        when: thereAreCertificates is defined
+
+      - name: create JKS keystore with a new dummy cert 
+        shell:
+          cmd: keytool -genkeypair -alias deleteme -storepass "{{ jks.keystorepassword }}" -keypass dummykeypass -keystore "{{ jks.tmpFolder }}/{{ jks.filename }}" -dname "CN=cn, OU=ou, O=o, L=L, ST=ST, C=C"
+        when: thereAreCertificates is defined
+
+      - name: remove deleteme dummy cert from the keystore 
+        shell:
+          cmd: keytool -delete -alias deleteme -storepass "{{ jks.keystorepassword }}" -keystore "{{ jks.tmpFolder }}/{{ jks.filename }}"
+        when: thereAreCertificates is defined
+
+      - name: put all certificates to files in temp folder for keytool to use
+        ansible.builtin.copy:
+          content: "{{ item.fileContent | b64decode }}"
+          dest: "{{ jks.tmpFolder }}/certificates/{{ item.fileName }}"
+        with_items: "{{ jks.certs | default({}) | dict2items(key_name='fileName', value_name='fileContent') }}"
+        when: thereAreCertificates is defined
+
+      - name: put all the certificate files onto the keystore
+        shell:
+          cmd: yes | keytool -importcert -file "{{ jks.tmpFolder }}/certificates/{{ item.fileName }}" -storepass "{{ jks.keystorepassword }}" -keystore "{{ jks.tmpFolder }}/{{ jks.filename }}" -alias "{{ item.fileName }}" 
+        with_items: "{{ jks.certs | default({}) | dict2items(key_name='fileName', value_name='fileContent') }}"
+        when: thereAreCertificates is defined
+
+      - name: move jks to the destination directory
+        shell:
+          cmd: mv "{{ jks.tmpFolder }}/{{ jks.filename }}" "{{ jks.moveToFolder }}"/
+        when: thereAreCertificates is defined
+
+      - name: Remove temporary folder recursively
+        ansible.builtin.file:
+          path: "{{ jks.tmpFolder }}"
+          state: absent
+        when: thereAreCertificates is defined
