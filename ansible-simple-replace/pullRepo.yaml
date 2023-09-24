@@ -1,0 +1,48 @@
+---
+- name: Pull templates from git repo, use vars files to replace vars, then copy the files to there location, create backups
+  hosts: localhost
+  connection: local  # This ensures the playbook runs on the localhost
+
+  vars:
+    gitrepo: git@gitlab.home:edg/configfiles.git
+    gitbranch: main
+
+  vars_files:
+    - vars.yaml 
+
+  tasks:
+    - name: Get current date
+      command: date +"%Y%m%d%H%M%S"
+      register: current_date
+
+    - name: Create workdir
+      file:
+        path: "/tmp/{{ current_date.stdout }}"
+        state: directory
+
+    - name: Clone Git Repository
+      git:
+        repo: "{{ gitrepo }}"
+        dest: "/tmp/{{ current_date.stdout }}"
+        version: "{{ gitbranch }}"  # Specify the branch, tag, or commit you want to download
+
+    - name: Find all files
+      shell: find "/tmp/{{ current_date.stdout }}" -type f -not -path "/tmp/{{ current_date.stdout }}/.git/*" -not -name README.md
+      register: findResult
+
+    - name: show find results
+      debug:
+        var: findResult.stdout_lines
+
+    - name: loop through the templates
+      template:
+        backup: true
+        src: "{{ item }}"
+        dest: "{{ item | regex_replace('^/tmp/' + current_date.stdout, '') }}"
+      with_items: "{{ findResult.stdout_lines }}"
+
+    - name: clean up workdirectory
+      file:
+        path: "/tmp/{{ current_date.stdout }}"
+        state: absent
+
